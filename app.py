@@ -1,5 +1,6 @@
 import random
 import uuid
+import traceback
 from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
@@ -9,7 +10,6 @@ app.secret_key = 'change-this-in-production'
 active_rounds = {}
 
 def generate_crash_point(house_edge=0.01):
-    """Return a random crash multiplier >= 1.00."""
     r = random.random()
     if r < house_edge:
         return 1.00
@@ -20,8 +20,10 @@ def index():
     try:
         return render_template('index.html')
     except Exception as e:
-        app.logger.error(f"Template error: {e}")
-        return "Internal error loading page", 500
+        # Print full traceback to logs (Render will show it)
+        traceback.print_exc()
+        # Also return a detailed error message (for debugging)
+        return f"<h1>Template Error</h1><pre>{traceback.format_exc()}</pre>", 500
 
 @app.route('/api/start', methods=['POST'])
 def start_round():
@@ -43,7 +45,7 @@ def start_round():
             'crash_point': crash_point
         })
     except Exception as e:
-        app.logger.error(f"Start error: {e}")
+        traceback.print_exc()
         return jsonify({'error': 'Server error'}), 500
 
 @app.route('/api/cashout', methods=['POST'])
@@ -69,7 +71,6 @@ def cash_out():
         crash_point = round_data['crash_point']
         bet = round_data['bet']
 
-        # If multiplier reached or exceeded crash point => crash
         if multiplier >= crash_point:
             round_data['active'] = False
             return jsonify({
@@ -79,7 +80,6 @@ def cash_out():
                 'message': f'💥 Crashed at {crash_point:.2f}x! You lost ${bet:.2f}.'
             })
 
-        # Otherwise player wins
         win_amount = bet * multiplier
         round_data['active'] = False
         return jsonify({
@@ -89,9 +89,8 @@ def cash_out():
             'message': f'✅ Cashed out at {multiplier:.2f}x! Won ${win_amount:.2f}.'
         })
     except Exception as e:
-        app.logger.error(f"Cashout error: {e}")
+        traceback.print_exc()
         return jsonify({'error': 'Server error'}), 500
 
 if __name__ == '__main__':
-    # For local testing
     app.run(debug=True, host='0.0.0.0', port=5000)
