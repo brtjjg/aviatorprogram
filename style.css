@@ -12,6 +12,7 @@ body {
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    padding: 20px;
 }
 
 .container {
@@ -53,7 +54,6 @@ header h1 {
     text-align: center;
     margin: 15px 0 25px;
     border: 1px solid #25333f;
-    position: relative;
     min-height: 200px;
     display: flex;
     flex-direction: column;
